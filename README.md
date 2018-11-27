@@ -17,3 +17,5 @@ npm run production
 
 ## Testing
 The Dapp currently runs on the Rinkeby testnet. After logging in, copy your ETH address and visit [https://faucet.rinkeby.io](faucet.rinkeby.io) to obtain test tokens. 
+
+Add me with kwingram25.id.blockstack!
