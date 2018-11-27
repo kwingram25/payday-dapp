@@ -19,8 +19,8 @@ export const billsCreate = data => ({
   type: types.BILLS_CREATE__BEGIN, data,
 })
 
-export const billsCreateSuccess = bills => ({
-  type: types.BILLS_CREATE__SUCCESS, bills,
+export const billsCreateSuccess = (bills, newBillId) => ({
+  type: types.BILLS_CREATE__SUCCESS, bills, newBillId,
 })
 
 export const billsCreateError = error => ({
@@ -39,8 +39,8 @@ export const billsUpdateError = error => ({
   type: types.BILLS_UPDATE__ERROR, error,
 })
 
-export const billsMarkAsPaid = billId => ({
-  type: types.BILLS_MARK_AS_PAID__BEGIN, billId,
+export const billsMarkAsPaid = (billId, markedPaid) => ({
+  type: types.BILLS_MARK_AS_PAID__BEGIN, billId, markedPaid,
 })
 
 export const billsMarkAsPaidSuccess = bills => ({
@@ -55,10 +55,14 @@ export const billsDelete = billIds => ({
   type: types.BILLS_DELETE__BEGIN, billIds,
 })
 
-export const billsDeleteSuccess = bills => ({
-  type: types.BILLS_DELETE__SUCCESS, bills,
+export const billsDeleteSuccess = (bills, billIds) => ({
+  type: types.BILLS_DELETE__SUCCESS, bills, billIds,
 })
 
 export const billsDeleteError = error => ({
   type: types.BILLS_DELETE__ERROR, error,
+})
+
+export const billsPurge = () => ({
+  type: types.BILLS_PURGE,
 })

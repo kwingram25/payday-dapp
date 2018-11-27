@@ -1,11 +1,12 @@
 import React from 'react'
 import ColorHash from 'color-hash'
 import styled from 'styled-components'
+import classNames from 'classnames'
+
+import withStyles from '@material-ui/core/styles/withStyles'
 import Avatar from '@material-ui/core/Avatar'
 
-const defaultStyle = {
-  // marginRight: '12px',
-}
+import styles from './styles'
 
 const colorHash = new ColorHash({
   saturation: 0.7,
@@ -19,50 +20,27 @@ const colorHash = new ColorHash({
   },
 })
 
-export default ({
-  style = defaultStyle, username = '?', avatarUrl, size, ...rest
+export default withStyles(styles)(({
+  classes, username, avatarUrl, big, ...rest
 }) => {
-  const Component = styled(Avatar)({
-    ...style,
-    color: 'white !important',
-    ...(
-      username !== '?' ? {
-        backgroundColor: `${colorHash.hex(username)} !important`,
-      } : { }
-    ),
-    ...(
-      size
-        ? {
-          width: `${size}px !important`,
-          height: `${size}px !important`,
-          fontSize: `${size / 2}px !important`,
-        }
-        : {}
-    ),
-  })
-
   const props = {
+    className: classNames(
+      classes.root,
+      big && classes.big,
+    ),
     ...rest,
-    // classes: {
-    //   root: {
-    //     ...(
-    //       size
-    //         ? { width: `${size}px`, height: `${size}px` }
-    //         : {}
-    //     ),
-    //   },
-    // },
-
   }
 
+  const StyledAvatar = (avatarUrl || !username) ? Avatar : styled(Avatar)({
+    color: 'white !important',
+    backgroundColor: `${colorHash.hex(username)} !important`,
+  })
+
   return avatarUrl ? (
-    <Component
-      {...props}
-      src={avatarUrl}
-    />
+    <StyledAvatar {...props} src={avatarUrl} />
   ) : (
-    <Component {...props}>
-      {username.substring(0, 1).toUpperCase()}
-    </Component>
+    <StyledAvatar {...props}>
+      {(username || '?').substring(0, 1).toUpperCase()}
+    </StyledAvatar>
   )
-}
+})

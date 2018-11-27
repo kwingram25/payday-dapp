@@ -3,6 +3,10 @@ import types from '../config/types'
 export const initialState = {
   dashboardFilter: 'all',
   dashboardShowArchived: false,
+  dashboardSortField: 'date',
+  dashboardSortOrder: true,
+  notification: null,
+  showTestModeNotice: false,
 }
 
 const actionsMap = (type) => {
@@ -20,6 +24,21 @@ const actionsMap = (type) => {
     case types.SET_DASHBOARD_SHOW_ARCHIVED:
       return (state, { showArchived }) => ({
         ...state, dashboardShowArchived: showArchived,
+      })
+
+    case types.SET_DASHBOARD_SORT:
+      return (state, { field, order }) => ({
+        ...state, dashboardSortField: field, dashboardSortOrder: order,
+      })
+
+    case types.SET_NOTIFICATION:
+      return (state, { text }) => ({
+        ...state, notification: text,
+      })
+
+    case types.SHOW_TEST_MODE_NOTICE:
+      return (state, { show }) => ({
+        ...state, showTestModeNotice: show,
       })
 
     default:

@@ -1,29 +1,14 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import blockies from 'ethereum-blockies'
-import { Link } from 'react-router-dom'
 
-// import Button from '@material-ui/core/Button'
-import { withStyles } from '@material-ui/core/'
+import withStyles from '@material-ui/core/styles/withStyles'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import IconButton from '@material-ui/core/IconButton'
 import TextField from '@material-ui/core/TextField'
 import List from '@material-ui/core/List'
-import ListItem from '@material-ui/core/ListItem'
-import ListItemAvatar from '@material-ui/core/ListItemAvatar'
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
-import ListItemText from '@material-ui/core/ListItemText'
-
 
 import AddIcon from '@material-ui/icons/Add'
-import DeleteIcon from '@material-ui/icons/Delete'
-
-
-// import AccountCircle from '@material-ui/icons/AccountCircle'
-// import MoreVertIcon from '@material-ui/icons/MoreVert'
-
-// aria-owns={open ? 'long-menu' : undefined}
 
 import {
   contactsCreate,
@@ -31,40 +16,21 @@ import {
   contactsFetch,
 } from 'actions/contacts'
 
-import UserAvatar from 'components/UserAvatar'
 import Loader from 'components/Loader'
-import { SmallHeader } from 'components/views'
+import SmallHeader from 'components/SmallHeader'
 
 import ContactItem from './ContactItem'
-import {
-  SmallHeaderHelp,
-} from '../Sidebar/views'
-import {
-  AddContactForm,
-  AddContactEndWrapper,
-  Root,
-  ContactsList,
-//   UserAccountPic,
-//   UserAccountDetails,
-//   UserAccountBalance,
-//   UserAccountAddress,
-} from './views'
 
-// import {
-//   UserInfo,
-//   UserPic,
-//   UserName,
-//   UserUsername,
-//   UserOptionsButton,
-// } from './views'
+import styles from './styles'
 
-export default @connect(
+export default
+@connect(
   ({ contacts }) => ({
-    ready: !contacts.working && contacts.data !== null,
+    ready: !contacts.fetching && contacts.data !== null,
     contacts: contacts.data && Object.values(contacts.data),
-    isFetching: contacts.working === 'fetch',
-    isCreating: contacts.working === 'create',
-    isDeleting: contacts.working === 'delete',
+    isFetching: contacts.fetching,
+    isCreating: contacts.creating,
+    isDeleting: contacts.deleting,
     error: contacts.error,
   }),
   dispatch => ({
@@ -75,6 +41,7 @@ export default @connect(
     }, dispatch),
   }),
 )
+@withStyles(styles)
 class UserContacts extends React.PureComponent {
   state = {
     text: '',
@@ -98,17 +65,13 @@ class UserContacts extends React.PureComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { error, selected, isCreating } = this.props
+    const { error, isCreating } = this.props
     if (error !== nextProps.error) {
       this.setState({
         error: nextProps.error,
       })
     }
-    // if (selected !== nextProps.selected) {
-    //   this.setState({
-    //     selected: nextProps.selected,
-    //   })
-    // }
+
     if (isCreating && !nextProps.isCreating) {
       this.setState({
         text: '',
@@ -128,6 +91,9 @@ class UserContacts extends React.PureComponent {
       case 'contact-exists':
         return 'User already added'
 
+      case 'cannot-add-self':
+        return 'You can\'t add yourself'
+
       default:
         return 'An unknown error occurred'
     }
@@ -144,6 +110,7 @@ class UserContacts extends React.PureComponent {
         isCreating,
         onSelect,
         selected,
+        classes,
       },
       state: {
         error,
@@ -153,44 +120,54 @@ class UserContacts extends React.PureComponent {
 
     if (isFetching) {
       return (
-        <Root>
+        <div className={classes.root}>
           <Loader size={40} />
-        </Root>
+        </div>
       )
     }
 
 
     return (
-      <Root>
+      <div className={classes.root}>
         {!modal && (
           <SmallHeader>
-          Contacts
-            <SmallHeaderHelp>
-            click to bill
-            </SmallHeaderHelp>
+            Contacts
           </SmallHeader>
         )}
-        <ContactsList dense>
-          {(contacts || []).map(contact => (
-            <ContactItem {...{
-              contact,
-              modal,
-              ...(
-                modal
-                  ? {
-                    selected: selected.username === contact.username,
-                    onClick: () => {
-                      onSelect(contact)
-                    },
-                  }
-                  : {}
-              ),
-            }}
-            />
-          ))
+        {(contacts && contacts.length) ? (
+          <List className={classes.list} dense>
+            {(contacts || []).map(contact => (
+              <ContactItem {...{
+                key: contact.username,
+                contact,
+                modal,
+                ...(
+                  modal
+                    ? {
+                      selected: selected === contact.username,
+                      onClick: () => {
+                        onSelect(contact)
+                      },
+                    }
+                    : {}
+                ),
+              }}
+              />
+            ))
           }
-        </ContactsList>
-        <AddContactForm>
+          </List>
+        ) : (
+          <div className={classes.noContacts}>
+          No Contacts
+          </div>
+        )}
+        <form
+          className={classes.addForm}
+          onSubmit={(e) => {
+            e.preventDefault()
+            actions.contactsCreate(text)
+          }}
+        >
           <TextField
             style={{
               flexGrow: 1,
@@ -198,8 +175,6 @@ class UserContacts extends React.PureComponent {
             error={error}
             helperText={error ? errorMessage() : ''}
             value={text}
-            id="standard-error"
-            defaultValue="Hello World"
             label="Enter username"
             onChange={(e) => {
               this.setState({
@@ -208,22 +183,20 @@ class UserContacts extends React.PureComponent {
               })
             }}
           />
-          <AddContactEndWrapper>
+          <div className={classes.addContactEnd}>
             {isCreating ? (
               <CircularProgress size={32} />
             ) : (
               <IconButton
                 color="primary"
-                onClick={() => {
-                  actions.contactsCreate(text)
-                }}
+                type="submit"
               >
                 <AddIcon />
               </IconButton>
             )}
-          </AddContactEndWrapper>
-        </AddContactForm>
-      </Root>
+          </div>
+        </form>
+      </div>
     )
   }
 }

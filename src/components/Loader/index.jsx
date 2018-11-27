@@ -1,11 +1,14 @@
 import React from 'react'
 
+import withStyles from '@material-ui/core/styles/withStyles'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { Container } from './views'
+import styles from './styles'
 
-export default ({ size }) => ((
-  <Container>
-    <CircularProgress size={size} />
-  </Container>
-))
+export default withStyles(styles)(
+  ({ size, classes }) => (
+    <div className={classes.root}>
+      <CircularProgress size={size} />
+    </div>
+  ),
+)

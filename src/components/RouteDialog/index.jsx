@@ -3,12 +3,13 @@ import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { goBack } from 'connected-react-router'
 
-import Button from '@material-ui/core/Button'
+import withStyles from '@material-ui/core/styles/withStyles'
 import Dialog from '@material-ui/core/Dialog'
 import DialogActions from '@material-ui/core/DialogActions'
 import DialogContent from '@material-ui/core/DialogContent'
-import DialogContentText from '@material-ui/core/DialogContentText'
 import DialogTitle from '@material-ui/core/DialogTitle'
+
+import styles from './styles'
 
 export default
 @connect(
@@ -21,6 +22,7 @@ export default
     }, dispatch),
   }),
 )
+@withStyles(styles)
 class RouteDialog extends React.Component {
   state = {
     open: false,
@@ -30,14 +32,14 @@ class RouteDialog extends React.Component {
     super(props)
     this.state = {
       ...this.state,
-      open: props.match,
+      open: props.isMatch,
     }
   }
 
   componentWillReceiveProps(nextProps) {
     const { isMatch } = this.props
     if (isMatch !== nextProps.isMatch) {
-      this.setState({ open: nextProps.match })
+      this.setState({ open: nextProps.isMatch })
     }
   }
 
@@ -47,28 +49,35 @@ class RouteDialog extends React.Component {
 
   render() {
     const {
+      classes,
       actions,
       id,
       dialogTitle,
       dialogContent,
+      dialogProps,
       dialogActions = () => null,
       dialogTitleProps = {},
       dialogContentProps = {},
       dialogActionsProps = {},
       isMatch,
+      routeRegex,
       ...rest
     } = this.props
     const { open } = this.state
 
-    const dialogProps = {
+    const props = {
+      ...dialogProps,
       open,
+      classes: {
+        paper: classes.dialog,
+      },
       onBackdropClick: this.exit,
       onExited: actions.goBack,
       ...(dialogTitle ? { 'aria-labelledby': id } : {}),
     }
 
     return (
-      <Dialog {...dialogProps} {...rest}>
+      <Dialog {...props} {...rest}>
         {dialogTitle && (
           <DialogTitle {...dialogTitleProps}>
             {dialogTitle}

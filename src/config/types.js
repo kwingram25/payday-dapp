@@ -1,13 +1,10 @@
 export default {
   ...[
     'USER_SIGNIN',
+    'USER_POST_SIGNIN',
     'USER_SIGNOUT',
-    'FETCH_BILLS',
-    'ADD_BILL',
-    'DELETE_BILL',
-    'EDIT_BILL',
     'USER_ACCOUNT_FETCH',
-    'USER_BALANCE_FETCH',
+    'USER_ACCOUNT_BALANCE_FETCH',
     'CONTACTS_FETCH',
     'CONTACTS_CREATE',
     'CONTACTS_DELETE',
@@ -16,6 +13,8 @@ export default {
     'BILLS_UPDATE',
     'BILLS_DELETE',
     'BILLS_MARK_AS_PAID',
+    'PAYMENTS_CREATE',
+    'PAYMENTS_FETCH',
   ].reduce(
     (obj, str) => ({
       ...obj,
@@ -29,6 +28,12 @@ export default {
   ...[
     'SET_DASHBOARD_FILTER',
     'SET_DASHBOARD_SHOW_ARCHIVED',
+    'SET_DASHBOARD_SORT',
+    'SET_NOTIFICATION',
+    'SHOW_TEST_MODE_NOTICE',
+    'CONTACTS_PURGE',
+    'BILLS_PURGE',
+    'PAYMENTS_PURGE',
   ].reduce(
     (obj, str) => ({
       ...obj,

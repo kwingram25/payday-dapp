@@ -38,3 +38,7 @@ export const contactsDeleteSuccess = contacts => ({
 export const contactsDeleteError = error => ({
   type: types.CONTACTS_DELETE__ERROR, error,
 })
+
+export const contactsPurge = () => ({
+  type: types.CONTACTS_PURGE,
+})

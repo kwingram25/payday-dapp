@@ -1,8 +1,8 @@
 import 'regenerator-runtime/runtime'
 import { applyMiddleware, createStore, compose } from 'redux'
 import createSagaMiddleware from 'redux-saga'
-import { connectRouter, routerMiddleware } from 'connected-react-router';
-import { createBrowserHistory } from 'history';
+import { routerMiddleware } from 'connected-react-router'
+import { createBrowserHistory } from 'history'
 
 import createRootReducer from '../reducers'
 import rootSaga from '../sagas'

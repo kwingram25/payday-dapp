@@ -38,3 +38,7 @@ jspm_packages
 
 # Custom
 .DS_Store
+dist
+public
+bundleLibs
+stats.json

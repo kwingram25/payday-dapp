@@ -1,24 +1,9 @@
-import keyBy from 'lodash.keyby'
-import groupBy from 'lodash.groupby'
-import mapValues from 'lodash.mapvalues'
-
-import Q from 'q'
-import moment from 'moment'
 import {
-  all, call, put, select, takeEvery, takeLatest,
+  put, select, takeLatest,
 } from 'redux-saga/effects'
-import {
-  lookupProfile,
-  getFile,
-  putFile,
-} from 'blockstack'
-
-import { billId as newBillId } from 'utils'
 
 import * as actions from 'actions/bills'
-import { dashboard } from 'actions/navigation'
 
-import { billsFilePath, gaiaOptions } from 'config/app'
 import types from 'config/types'
 
 import Bill from 'models/Bill'
@@ -35,10 +20,9 @@ function* billsFetch() {
     yield Bill.init(me, contacts)
     // const bills = yield Bill.loadAll(me, contacts)
     //
-    yield put(actions.billsFetchSuccess())
+    yield put(actions.billsFetchSuccess(Bill.store))
   } catch (e) {
-    console.log(e)
-    yield put(actions.billsFetchError())
+    yield put(actions.billsFetchError(e.message))
   }
 }
 
@@ -53,80 +37,39 @@ function* billsCreate({ data }) {
   }
 
   if (!bill) {
-    yield put(actions.billsCreateError('unknown'))
+    yield put(actions.billsCreateError({}))
     return
   }
 
   // const bills = yield getBills()
   // bills[bill.id] = bill
-  yield put(actions.billsCreateSuccess())
+  yield put(actions.billsCreateSuccess(Bill.store, bill.id))
 }
 
 function* billsUpdate({ billId, data }) {
   try {
-    // const {
-    //   target,
-    //   amount,
-    //   amountPaid,
-    //   description,
-    //   date,
-    // } = data
-
     const bills = yield getBills()
     const { [billId]: bill } = bills
 
-    bill.update(data, yield getMe())
-
-    // if (me.username === target) {
-    //   yield put(actions.billsUpdateError('target'))
-    //   return
-    // }
-    //
-    // if (typeof amount !== 'undefined' && amount <= 0) {
-    //   yield put(actions.billsUpdateError('amount'))
-    //   return
-    // }
-    //
-    // const newData = {
-    //   ...(target && bill.target !== target ? { target } : {}),
-    //   ...(amount && bill.amount !== amount ? { amount } : {}),
-    //   ...(amountPaid && bill.amountPaid !== amountPaid ? { amountPaid } : {}),
-    //   ...(description && bill.description !== description ? { description } : {}),
-    //   ...(date && bill.date !== date ? { date } : {}),
-    // }
+    yield bill.update(data)
 
     yield put(
-      actions.billsUpdateSuccess(
-        // {
-        //   ...bills,
-        //   [billId]: bill,
-        // },
-      ),
+      actions.billsUpdateSuccess(Bill.store),
     )
   } catch (e) {
     yield put(actions.billsUpdateError(e))
   }
 }
 
-function* billsMarkAsPaid({ billId }) {
+function* billsMarkAsPaid({ billId, markedPaid }) {
   try {
     const bills = yield getBills()
-    const me = yield getMe()
     const { [billId]: bill } = bills
 
-    bill.update({ markedPaid: true }, me)
-    //
-    // if (me.username === bill.target) {
-    //   yield put(actions.billsMarkAsPaidError(true))
-    //   return
-    // }
-    //
-    // const newData = {
-    //   amountPaid: bill.amount,
-    // }
+    yield bill.update({ markedPaid })
 
     yield put(
-      actions.billsUpdateSuccess(),
+      actions.billsMarkAsPaidSuccess(Bill.store),
     )
   } catch (e) {
     yield put(actions.billsMarkAsPaidError(e))
@@ -135,46 +78,20 @@ function* billsMarkAsPaid({ billId }) {
 
 
 function* billsDelete(action) {
-  console.log(action)
-
   try {
     const { billIds } = action
 
     yield Bill.delete(billIds)
 
     yield put(
-      actions.billsDeleteSuccess(),
-      // Object.keys(bills).reduce(
-      //   (filtered, billId) => {
-      //     if (billIds.includes(billId)) {
-      //       return filtered
-      //     }
-      //     return {
-      //       ...filtered,
-      //       [billId]: bills[billId],
-      //     }
-      //   },
-      //   {},
-      // ),
+      actions.billsDeleteSuccess(Bill.store, billIds),
     )
   } catch (e) {
     yield put(
-      actions.billsDeleteError(e),
+      actions.billsDeleteError(e.message),
     )
   }
 }
-
-function* redirectFromBill() {
-  const bills = select(state => state.bills.data)
-  const billId = (select(state => state.router.location.hash))
-
-  console.log(billId)
-
-  if (!bills[billId]) {
-    yield put(dashboard())
-  }
-}
-
 
 export default function* contactsSaga() {
   yield takeLatest(types.BILLS_FETCH__BEGIN, billsFetch)
@@ -182,8 +99,4 @@ export default function* contactsSaga() {
   yield takeLatest(types.BILLS_UPDATE__BEGIN, billsUpdate)
   yield takeLatest(types.BILLS_DELETE__BEGIN, billsDelete)
   yield takeLatest(types.BILLS_MARK_AS_PAID__BEGIN, billsMarkAsPaid)
-
-  // yield takeEvery([
-  //   types.BILLS_FETCH__SUCCESS,
-  // ], redirectFromBill)
 }

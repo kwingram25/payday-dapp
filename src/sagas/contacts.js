@@ -1,43 +1,35 @@
 import {
-  call, put, select, takeEvery, takeLatest,
+  put, select, takeLatest,
 } from 'redux-saga/effects'
-import {
-  lookupProfile,
-  getFile,
-  putFile,
-} from 'blockstack'
-
-import { createUserObject } from 'utils'
 
 import * as actions from 'actions/contacts'
-import { billsFetch, billsDeleteMultiple } from 'actions/bills'
+import { billsFetch } from 'actions/bills'
+import { paymentsFetch } from 'actions/payments'
 
-import { contactsFilePath, gaiaOptions } from 'config/app'
 import types from 'config/types'
 
-import Bill from 'models/Bill'
 import Contact from 'models/Contact'
+
+const getMe = () => select(state => state.auth.user.username)
 
 function* contactsFetch() {
   try {
-    yield Contact.init()
-    yield put(actions.contactsFetchSuccess())
+    const me = yield getMe()
+    yield Contact.init(me)
+    yield put(actions.contactsFetchSuccess(Contact.store || {}))
   } catch (e) {
-    console.log(e)
     yield put(actions.contactsFetchError())
   }
 }
 
 function* contactsCreate({ username }) {
   let contact
-  console.log(username)
   try {
     contact = new Contact({ username })
     yield contact.populate()
-    Contact.save()
+    yield Contact.save()
   } catch (e) {
-    console.log(e)
-    yield put(actions.contactsCreateError(e))
+    yield put(actions.contactsCreateError(e.message))
     return
   }
 
@@ -46,27 +38,23 @@ function* contactsCreate({ username }) {
     return
   }
 
-  yield put(actions.contactsCreateSuccess())
+  yield put(actions.contactsCreateSuccess(Contact.store))
 }
 
 function* contactsDelete({ username }) {
   try {
     yield Contact.delete(username)
 
-    yield put(actions.contactsDeleteSuccess())
+    yield put(actions.contactsDeleteSuccess(Contact.store))
   } catch (e) {
     yield put(actions.contactsDeleteError())
   }
 }
 
-
-// function* userAccountFetchSuccess() {
-//   yield put(push('/dashboard'))
-// }
-//
-// function* userAccountFetchError() {
-//   yield signUserOut(window.location.origin)
-// }
+function* fetchUserItems() {
+  yield put(billsFetch())
+  yield put(paymentsFetch())
+}
 
 export default function* contactsSaga() {
   yield takeLatest(types.CONTACTS_FETCH__BEGIN, contactsFetch)
@@ -77,19 +65,5 @@ export default function* contactsSaga() {
     types.CONTACTS_FETCH__SUCCESS,
     types.CONTACTS_CREATE__SUCCESS,
     types.CONTACTS_DELETE__SUCCESS,
-  ], function* () {
-    yield put(
-      billsFetch(),
-    )
-  })
-
-
-  // yield takeEvery([
-  //   types.CONTACTS_DELETE__SUCCESS,
-  // ], deleteUserBills)
-
-  // yield takeEvery(types.USER_BALANCE_FETCH__BEGIN, userBalanceFetch)
-
-  // yield takeEvery(types.USER_ACCOUNT_FETCH__SUCCESS, userAccountFetchSuccess)
-  // yield takeEvery(types.USER_ACCOUNT_FETCH__ERROR, userAccountFetchError)
+  ], fetchUserItems)
 }

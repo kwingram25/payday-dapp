@@ -22,6 +22,14 @@ export const deleteBill = id => push({
   },
 })
 
+export const payBill = id => push({
+  pathname: '/bill/pay',
+  hash: id,
+  state: {
+    modal: true,
+  },
+})
+
 export const deleteContact = username => push({
   pathname: '/contact/delete',
   state: {

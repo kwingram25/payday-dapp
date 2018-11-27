@@ -1,0 +1,12 @@
+{
+  "name": "PayDay",
+  "start_url": "https://payday.now.sh",
+  "description": "Bill and pay others with Ethereum",
+  "icons": [
+    {
+      "src": "https://payday.now.sh/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

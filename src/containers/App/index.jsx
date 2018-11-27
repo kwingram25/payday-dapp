@@ -1,152 +1,83 @@
-import React, { Link } from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import {
   Route, Redirect, Switch, withRouter,
 } from 'react-router-dom'
-import { TransitionGroup, CSSTransition } from 'react-transition-group'
-import {
-  push,
-} from 'connected-react-router'
 
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles'
+import withStyles from '@material-ui/core/styles/withStyles'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import Grid from '@material-ui/core/Grid'
-import Fade from '@material-ui/core/Fade'
 
 import {
   isSignInPending,
   isUserSignedIn,
-  handlePendingSignIn,
 } from 'blockstack'
 
+import { userPostSignIn } from 'actions/auth'
 
-import { createUserObject } from 'utils'
+import Signin from 'pages/Signin'
+import Dashboard from 'pages/Dashboard'
+import Bill from 'pages/Bill'
 
-import {
-  userSignInSuccess,
-  userSignInError,
-} from 'actions/auth'
-
-import Dashboard from 'components/Dashboard'
 import Header from 'components/Header'
 import Sidebar from 'components/Sidebar'
-import Signin from 'components/Signin'
-import Bill from 'components/Bill'
 
-import { SiteWrapper, MainPanel } from './views'
+import styles from './styles'
 
 const ProtectedRoute = props => (isUserSignedIn()
   ? <Route {...props} />
   : <Redirect exact to="/" />)
 
-const FallbackRoute = props => (
-  <Redirect to={isUserSignedIn() ? '/dashboard' : '/'} />
+const FallbackRoute = ({ authenticated }) => (
+  <Redirect to={authenticated ? '/dashboard' : '/'} />
 )
 
-// const ProtectedRoute = ({ Component, ...rest }) => (
-//   <Route
-//     {...rest}
-//     render={props => (isUserSignedIn() ? (
-//       <Component {...props} />
-//     ) : (
-//       <Redirect exact to={{ pathname: '/', exact: true, state: { from: props.location } }} />
-//     ))
-//         }
-//   />
-// )
+const renderBill = (props) => {
+  const { location, match } = props
+  const id = location.hash.replace(/#/g, '')
+  const isNew = match.params[0] === 'new'
+  const isEditing = isNew || match.params[0] === 'edit'
+  const target = location.state && location.state.target
 
-const Layout = ({ children }) => ((
-  <SiteWrapper>
-    <CssBaseline />
-    <Grid container spacing={24}>
-      {isUserSignedIn() && (
-        <Route>
-          <React.Fragment>
-            <Grid item xs={12}>
-              <Header />
-            </Grid>
-            <Grid item xs={12} sm={5} md={4}>
-              <Sidebar />
-            </Grid>
-          </React.Fragment>
-        </Route>
-      )}
-      <Grid
-        item
-        xs={12}
-        {...isUserSignedIn()
-          ? {
-            sm: 7,
-            md: 8,
-          } : {
-            xs: 12,
-          }}
-      >
-        {children}
-      </Grid>
-    </Grid>
-  </SiteWrapper>
-))
+  return (
+    <Bill
+      {...(isNew ? { isNew } : { id })}
+      {...{ isEditing, target }}
+    />
+  )
+}
 
-const MySwitch = withRouter(() => ((
-  <div>
-    <Switch>
-      <Route exact path="/" component={Signin} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/bill" component={Bill} />
-      <ProtectedRoute path="/bill/:id" component={Bill} />
-    </Switch>
-  </div>
-)))
 
-class App extends React.PureComponent {
-  // state = {
-  //   fadeIn: true,
-  // }
-
+class App extends React.Component {
   componentWillMount() {
-    const { actions, user, isIndex } = this.props
-    if (isSignInPending()) {
-      handlePendingSignIn()
-        .then(() => {
-          actions.userSignInSuccess(
-            createUserObject(),
-          )
-          actions.goToDashboard()
-        })
-        .catch((error) => {
-          actions.userSignInError(error)
-        })
-    } else if (isUserSignedIn()) {
-      actions.userSignInSuccess(
-        createUserObject(),
-      )
-      if (isIndex) {
-        actions.goToDashboard()
-      }
+    const { actions } = this.props
+
+    if (isSignInPending() || isUserSignedIn()) {
+      actions.userPostSignIn()
     }
   }
 
   render() {
-    console.log('App', Date.now())
+    const { authenticated, classes } = this.props
     return (
-      <SiteWrapper>
+      <div className={classes.root}>
         <CssBaseline />
-        <Grid container spacing={24}>
+        <Grid container spacing={16}>
           <Grid item xs={12}>
             <Header />
           </Grid>
-          {isUserSignedIn() && (
+          {authenticated && (
             <Grid item sm={12} md={4}>
               <Sidebar />
             </Grid>
           )}
 
-          <MainPanel
+          <Grid
+            className={classes.mainPanel}
             item
             xs={12}
-            {...(isUserSignedIn()
+            {...(authenticated
               ? {
                 sm: 12,
                 md: 8,
@@ -155,49 +86,42 @@ class App extends React.PureComponent {
               })}
           >
             <Switch>
-              <Route exact path="/" component={Signin} />
-              <ProtectedRoute path="/dashboard" component={Dashboard} />
-              <ProtectedRoute exact path="/bill" component={Bill} />
-              <ProtectedRoute exact path="/bill/(edit|new)?" component={Bill} />
+              <Route
+                exact
+                path="/"
+                component={Signin}
+              />
+              <ProtectedRoute
+                authenticated={authenticated}
+                path="/dashboard"
+                component={Dashboard}
+              />
+              <ProtectedRoute
+                authenticated={authenticated}
+                path="/bill/(edit|new)?"
+                render={renderBill}
+              />
               <FallbackRoute />
             </Switch>
-
-          </MainPanel>
-
+          </Grid>
         </Grid>
-
-      </SiteWrapper>
+      </div>
     )
   }
 }
 
-export default connect(
-  ({ auth, router }) => ({
-    user: auth.user,
-    isIndex: router.location.pathname === '/',
-    // pathname: router.location.pathname,
-  }),
-  dispatch => ({
-    actions: {
-      ...bindActionCreators({
-        userSignInSuccess,
-        userSignInError,
+export default
+withRouter(
+  connect(
+    ({ auth }) => ({
+      authenticated: auth.authenticated,
+    }),
+    dispatch => ({
+      actions: bindActionCreators({
+        userPostSignIn,
       }, dispatch),
-      goToDashboard: () => dispatch(push('/dashboard')),
-    },
-  }),
-)(App)
-
-/*
-
-<div style={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  {isUserSignedIn() && <Header />}
-  {isUserSignedIn() && <RoutingPanel />}
-  <Switch>
-    <Route exact path="/" component={Home} />
-    <ProtectedRoute exact {...props} path="/wallets" Component={WalletList} />
-    <ProtectedRoute {...props} path="/wallet/:id" Component={Wallet} />
-    <ProtectedRoute {...props} path="/exchange" Component={Exchange} />
-    <Route path="/:any" component={Initial} />
-  </Switch>
-</div> */
+    }),
+  )(
+    withStyles(styles)(App),
+  ),
+)

@@ -1,30 +1,37 @@
 import React from 'react'
 
+import withStyles from '@material-ui/core/styles/withStyles'
 import TextField from '@material-ui/core/TextField'
 import InputAdornment from '@material-ui/core/InputAdornment'
 
-import { EthSymbol } from './views'
+import styles from './styles'
 
 const variants = {
   eth: {
-    placeholder: 0,
+    placeholder: '0',
     step: 0.1,
     symbol: 'ETH',
   },
   gwei: {
-    placeholder: 0,
+    placeholder: '0',
     step: 1,
     symbol: 'GWei',
   },
   limit: {
-    placeholder: 0,
+    placeholder: '0',
     step: 1000,
     symbol: 'Gas',
   },
 }
 
-const EthTextField = ({
-  variant = 'eth', onChange, InputProps = {}, ...props
+export default
+withStyles(styles)(({
+  variant = 'eth',
+  InputProps = {},
+  max = null,
+  onChange,
+  classes,
+  ...props
 }) => {
   const {
     placeholder, step, symbol,
@@ -51,15 +58,15 @@ const EthTextField = ({
       inputProps: {
         min: 0,
         step,
+        max,
       },
       endAdornment: (
         <InputAdornment
+          className={classes.inputAdornment}
           position="end"
           disableTypography
         >
-          <EthSymbol>
-            {symbol}
-          </EthSymbol>
+          {symbol}
         </InputAdornment>
       ),
       ...InputProps,
@@ -71,5 +78,4 @@ const EthTextField = ({
       {...props}
     />
   )
-}
-export default EthTextField
+})

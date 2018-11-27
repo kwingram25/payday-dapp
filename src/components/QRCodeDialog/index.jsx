@@ -5,20 +5,17 @@ import { goBack } from 'connected-react-router'
 
 import QRCode from 'qrcode'
 
-import { withStyles } from '@material-ui/core/styles'
 import Button from '@material-ui/core/Button'
 import Paper from '@material-ui/core/Paper'
-import Dialog from '@material-ui/core/Dialog'
-import DialogActions from '@material-ui/core/DialogActions'
-import DialogContent from '@material-ui/core/DialogContent'
 
 import Loader from 'components/Loader'
 import RouteDialog from 'components/RouteDialog'
 
 export default
 @connect(
-  ({ account, router }) => ({
-    address: account.address,
+  ({ auth, router }) => ({
+    isReady: !!auth.user && !!auth.user.address,
+    address: auth.user && auth.user.address,
     open: /\/qr/.test(router.location.pathname),
   }),
   dispatch => ({
@@ -33,13 +30,21 @@ class AddressQRCodeDialog extends Component {
   }
 
   componentWillMount() {
-    this.getQRCode()
+    const { isReady } = this.props
+    const { qrCode } = this.state
+    if (isReady && !qrCode) {
+      this.getQRCode()
+    }
   }
 
-  getQRCode = async () => {
-    console.log('fuckkkk')
-    const { address } = this.props
+  componentWillReceiveProps(nextProps) {
+    const { qrCode } = this.state
+    if (nextProps.isReady && !qrCode) {
+      this.getQRCode(nextProps.address)
+    }
+  }
 
+  getQRCode = async (address = this.props.address) => {
     const qrCode = await QRCode.toDataURL(address, { width: 300 })
 
     this.setState({
@@ -47,30 +52,33 @@ class AddressQRCodeDialog extends Component {
     })
   }
 
-  render() {
-    // console.log('AddressQRCodeDialog');
-
-
+  dialogContent = () => {
     const {
-      open,
-      actions,
+      isReady,
     } = this.props
+
+    if (!isReady) {
+      return (
+        <Loader size={40} />
+      )
+    }
 
     const {
       qrCode,
     } = this.state
 
-    const dialogProps = {
-      open: open || false,
-      onClose: () => {
-        actions.goBack()
-      },
-    }
-
     const qrCodeProps = {
       src: qrCode,
     }
 
+    return (
+      <Paper elevation={12}>
+        <img alt="QR Code" {...qrCodeProps} />
+      </Paper>
+    )
+  }
+
+  render() {
     const closeButtonProps = exit => ({
       color: 'default',
       onClick: exit,
@@ -78,15 +86,10 @@ class AddressQRCodeDialog extends Component {
 
     return (
       <RouteDialog {...{
+        id: 'qr-code',
         routeRegex: /\/qr/,
         maxWidth: 'xs',
-        dialogContent: qrCode ? (
-          <Paper elevation={12}>
-            <img alt="QR Code" {...qrCodeProps} />
-          </Paper>
-        ) : (
-          <Loader size={40} />
-        ),
+        dialogContent: this.dialogContent(),
         dialogActions: exit => (
           <Button {...closeButtonProps(exit)}>
             Close

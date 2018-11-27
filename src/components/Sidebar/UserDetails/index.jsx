@@ -2,37 +2,23 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
-import Button from '@material-ui/core/Button'
+import IconButton from '@material-ui/core/IconButton'
+import Tooltip from '@material-ui/core/Tooltip'
+
 import PowerIcon from '@material-ui/icons/PowerSettingsNew'
-import { withStyles } from '@material-ui/core/styles'
+import withStyles from '@material-ui/core/styles/withStyles'
 
-// aria-owns={open ? 'long-menu' : undefined}
+import { userSignOut, userAccountFetch } from 'actions/auth'
 
-import { userSignOut } from 'actions/auth'
-import { userAccountFetch } from 'actions/account'
 
-import { mdSidebarPanelStyles } from 'config/styles'
-
-import UserAvatar from 'components/UserAvatar'
+import UserInfo from 'components/UserInfo'
 import EthBalance from 'components/EthBalance'
 import Loader from 'components/Loader'
+import SmallHeader from 'components/SmallHeader'
 
-import {
-  SmallHeader,
-} from 'components/views'
 import UserAccount from './UserAccount'
 
-import {
-  UserDetailsWrapper,
-  UserInfo,
-  UserPic,
-  UserNameInfo,
-  UserName,
-  UserUsername,
-  UserOptionsButton,
-  UserStats,
-  UserStat,
-} from './views'
+import styles from './styles'
 
 const cumulativeBalance = filterFn => data => Object.values(data)
   .filter(filterFn)
@@ -40,12 +26,12 @@ const cumulativeBalance = filterFn => data => Object.values(data)
 
 export default
 @connect(
-  ({ auth, account, bills }) => ({
-    ready: !account.working && (account.address !== null && account.balance !== null),
+  ({ auth, bills, payments }) => ({
     user: auth.user,
-    ...(bills.data ? {
-      youOwe: cumulativeBalance(({ isOwned, isPaid }) => !isOwned && !isPaid)(bills.data),
-      youAreOwed: cumulativeBalance(({ isOwned, isPaid }) => isOwned && !isPaid)(bills.data),
+    isReady: auth.user && auth.user.address,
+    ...((bills.data && payments.data) ? {
+      youOwe: cumulativeBalance(({ isOwned, isClosed }) => !isOwned && !isClosed)(bills.data),
+      youAreOwed: cumulativeBalance(({ isOwned, isClosed }) => isOwned && !isClosed)(bills.data),
     } : {}),
   }),
   dispatch => ({
@@ -55,86 +41,78 @@ export default
     }, dispatch),
   }),
 )
+@withStyles(styles)
 class UserDetails extends React.Component {
   componentWillMount() {
-    const { actions, ready } = this.props
-    if (!ready) {
+    const { actions, isReady } = this.props
+    if (!isReady) {
       actions.userAccountFetch()
     }
   }
 
   render() {
     const {
-      ready, user, actions, youOwe = 0, youAreOwed = 0,
+      classes, isReady, user, actions, youOwe = 0, youAreOwed = 0,
     } = this.props
-    if (!ready) {
+    if (!isReady) {
       return (
-        <UserDetailsWrapper>
+        <div className={classes.root}>
           <Loader size={40} />
-        </UserDetailsWrapper>
+        </div>
       )
     }
-    const { username, name, avatarUrl } = user || {}
+
     return (
-      <UserDetailsWrapper>
-        <SmallHeader>
+      <div className={classes.root}>
+        <div>
+          <SmallHeader>
         Logged In As
-        </SmallHeader>
-        <UserInfo>
-          <UserAvatar {...{
-            avatarUrl,
-            username,
-          }}
+          </SmallHeader>
+          <UserInfo
+            user={user}
+            accessory={(
+              <Tooltip
+                title="Sign Out"
+                placement="bottom"
+                enterDelay={300}
+                classes={{
+                  tooltip: classes.tooltip,
+                }}
+              >
+                <IconButton
+                  color="secondary"
+                  aria-label="More"
+                  aria-haspopup="true"
+                  onClick={() => {
+                    actions.userSignOut()
+                  }}
+                >
+                  <PowerIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           />
-          <UserNameInfo>
-            <UserName>
-              {name || '<no name>'}
-            </UserName>
-            <UserUsername>
-              {username}
-            </UserUsername>
-          </UserNameInfo>
-          <UserOptionsButton
-            color="secondary"
-            aria-label="More"
-            aria-haspopup="true"
-            onClick={() => {
-              actions.userSignOut()
-            }}
-          >
-            <PowerIcon />
-          </UserOptionsButton>
-        </UserInfo>
-        <UserStats>
-          <UserStat>
+        </div>
+        <div className={classes.stats}>
+          <div className={classes.stat}>
             <SmallHeader>
           You Owe
             </SmallHeader>
-            <EthBalance
-              big
-              variant="negative"
-              quantity={youOwe}
-              style={{
-                marginTop: '8px',
-              }}
-            />
-          </UserStat>
-          <UserStat>
+            <EthBalance medium negative>
+              {youOwe}
+            </EthBalance>
+          </div>
+          <div className={classes.stat}>
             <SmallHeader>
           You Are Owed
             </SmallHeader>
-            <EthBalance
-              big
-              variant="positive"
-              quantity={youAreOwed}
-              style={{
-                marginTop: '8px',
-              }}
-            />
-          </UserStat>
-        </UserStats>
+            <EthBalance medium positive>
+              {youAreOwed}
+            </EthBalance>
+          </div>
+        </div>
         <UserAccount />
-      </UserDetailsWrapper>
+      </div>
     )
   }
 }
