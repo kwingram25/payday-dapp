@@ -162,9 +162,20 @@ class Bill extends React.Component {
       return
     }
 
+    // Clear state for new bill
+    if (nextProps.isNew) {
+      this.setState({
+        ...this.billState,
+        ...nextProps.bill,
+      })
+      return
+    }
+
     const changedBill = bill !== nextProps.bill
-    const changedEditing = nextProps.isEditing !== !this.props.isEditing
+    const changedEditing = nextProps.isEditing !== this.props.isEditing
     const changedReady = nextProps.isReady && !this.props.isReady
+
+    console.log(changedBill, changedEditing, changedReady)
 
     if (changedEditing || changedReady || changedBill) {
       this.setState(state => ({
