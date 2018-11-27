@@ -61,7 +61,7 @@ connect(
             faucet.rinkeby.io
           </a>
           {' '}
-          to request ETH tokens!
+          to request ETH!
         </div>
       ),
     }

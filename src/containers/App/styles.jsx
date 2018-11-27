@@ -14,9 +14,12 @@ export default (theme) => {
       width: `calc(100vw - ${2 * unit}px)`,
     },
     mainPanel: {
-      [theme.breakpoints.up('sm')]: {
-        minHeight: `calc(100vh - ${headerHeight}px - ${sidebarPanelHeight}px - ${6 * unit}px)`,
+      [theme.breakpoints.up('xs')]: {
+        minHeight: sidebarPanelHeight,
         paddingBottom: `${headerHeight}px !important`,
+      },
+      [theme.breakpoints.up('sm')]: {
+        minHeight: `calc(100vh - ${headerHeight}px - ${sidebarPanelHeight}px - ${8 * unit}px)`,
       },
       [theme.breakpoints.up('md')]: {
         minHeight: `calc(100vh - ${headerHeight}px - ${6 * unit}px)`,
